@@ -648,6 +648,7 @@
         .contact-tooltip a { color: #16354b; text-underline-offset: 3px; }
         @media (max-width: 480px) { .contact-tooltip { left: 0; transform: none; font-size: 11px; } }
     </style>
+    <link rel="stylesheet" href="assets/mobile.css" media="(max-width: 768px)">
 </head>
 <body>
     <div class="container">
@@ -1773,6 +1774,7 @@
     </div>
 
     <script>
+        if (!window.matchMedia("(max-width: 768px)").matches) {
         // Tab switching function
         function switchTab(tabName) {
             // Update buttons
@@ -1950,6 +1952,8 @@
             }
         });
 
+        }
     </script>
+    <script src="assets/mobile.js"></script>
 </body>
 </html>

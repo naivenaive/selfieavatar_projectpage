@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SelfieAvatar: High-Fidelity Animatable 3D Head Avatars from In-the-Wild Selfies</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="stylesheet" href="assets/fonts/fonts.css">
     <style>
         * {
@@ -617,7 +618,7 @@
         .institution-logos img:last-child { max-width: 210px; }
         .institution-logos img.aimira-logo { width: 190px; max-width: 210px; height: auto; }
         .project-logo { display: block; width: 420px; max-width: 65%; height: auto; margin: 0 auto 24px; }
-        .conference-logo { display: block; width: 260px; max-width: 70%; height: auto; margin: 24px auto 28px; }
+        .conference-logo { display: block; width: 290px; max-width: 70%; height: auto; margin: 24px auto 28px; }
         .authors { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 8px 26px; max-width: 1100px; margin: 0 auto; font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 1.7; color: #344955; letter-spacing: 0; }
         .authors > span { white-space: nowrap; }
         .authors sup { font-size: 0.65em; margin-left: 2px; }
@@ -648,6 +649,9 @@
         .contact-tooltip { top: 100%; }
         .contact-tooltip a { color: #16354b; text-underline-offset: 3px; }
         @media (max-width: 480px) { .contact-tooltip { left: 0; transform: none; font-size: 11px; } }
+        .contact-trigger { display: inline-flex; align-items: center; justify-content: center; vertical-align: -2px; width: 24px; height: 24px; margin-left: 3px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: #64748b; cursor: pointer; }
+        .contact-trigger:focus-visible { outline: 2px solid #94a3b8; outline-offset: 2px; }
+        @media (max-width: 768px) { .contact-trigger { width: 32px; height: 32px; vertical-align: -3px; } }
     </style>
     <link rel="stylesheet" href="assets/mobile.css" media="(max-width: 768px)">
 </head>
@@ -658,7 +662,7 @@
             <img class="project-logo" src="assets/selfieavatar-transparent.png" alt="SelfieAvatar">
             <h1 class="main-title">SelfieAvatar: High-Fidelity Animatable 3D Head Avatars from In-the-Wild Selfies</h1>
             <p class="subtitle"><img class="conference-logo" src="assets/acmmm2026-transparent.png" alt="ACM Multimedia 2026"></p>
-            <p class="authors"><span class="corresponding-name contact-name" tabindex="0" aria-describedby="zhen-contact-tooltip">Zhen Tian<span class="author-tooltip contact-tooltip" id="zhen-contact-tooltip" role="tooltip">Contact: <a href="mailto:zhentian.tian@connect.polyu.hk">zhentian.tian@connect.polyu.hk</a></span></span><span>Ziyang Li</span><span>Yuzhen Jiang</span><span>Huixian Ye</span><span>Zhuoming Chen</span><span class="corresponding-name" tabindex="0" aria-describedby="corresponding-tooltip">Mingguang He<sup>*</sup><span class="author-tooltip" id="corresponding-tooltip" role="tooltip">Corresponding author</span></span></p>
+            <p class="authors"><span class="corresponding-name contact-name" tabindex="0" aria-describedby="zhen-contact-tooltip">Zhen Tian<button class="contact-trigger" type="button" aria-label="Show contact details for Zhen Tian" aria-describedby="zhen-contact-tooltip" onclick="this.focus()"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button><span class="author-tooltip contact-tooltip" id="zhen-contact-tooltip" role="tooltip">Contact: <a href="mailto:zhentian.tian@connect.polyu.hk">zhentian.tian@connect.polyu.hk</a></span></span><span>Ziyang Li</span><span>Yuzhen Jiang</span><span>Huixian Ye</span><span>Zhuoming Chen</span><span class="corresponding-name" tabindex="0" aria-describedby="corresponding-tooltip">Mingguang He<sup>*</sup><span class="author-tooltip" id="corresponding-tooltip" role="tooltip">Corresponding author</span></span></p>
             <div class="institution-logos" aria-label="Author institutions">
                 <img src="assets/polyu.png" alt="The Hong Kong Polytechnic University">
                 <img src="assets/school-of-optometry.png" alt="School of Optometry, The Hong Kong Polytechnic University">

@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SelfieAvatar: High-Fidelity Animatable 3D Head Avatars from In-the-Wild Selfies</title>
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-card: #f8f9fa;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-red: #f43f5e;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: none;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Title Section */
+        .hero-section {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .main-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 60px 0;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 32px;
+            background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px;
+        }
+
+        .content-card {
+            margin-bottom: 32px;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .tab-btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 12px 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--text-primary);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Paper Row */
+        .paper-item {
+            margin-bottom: 32px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+
+        .paper-fixed {
+            flex-shrink: 0;
+            display: flex;
+            gap: 16px;
+        }
+
+        .paper-scroll {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--border-color);
+        }
+
+        .paper-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .paper-scroll::-webkit-scrollbar-track {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .paper-scroll::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .paper-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent-primary);
+            margin-bottom: 16px;
+            padding-left: 12px;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .video-row {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--border-color);
+        }
+
+        .video-row::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .video-row::-webkit-scrollbar-track {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .video-row::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .media-card {
+            flex-shrink: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(30, 30, 46, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-card > img,
+        .media-card > video {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .media-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Three view specific */
+        .three-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .three-card {
+            background: rgba(30, 30, 46, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .three-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+        }
+
+        .three-card video, .three-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .three-label {
+            padding: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Part 2 - Wild Reconstruction */
+        .wild-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .wild-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            background: rgba(30, 30, 46, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+
+        .wild-item:hover {
+            transform: scale(1.02);
+        }
+
+        .wild-item img,
+        .wild-item video {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .wild-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .wild-card {
+            position: relative;
+        }
+
+        /* Part 3 - UNet vs DiT */
+        .dit-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 32px;
+        }
+
+        /* Part 4 - App Demo */
+        .app-demo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .app-demo-item {
+            display: none;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .app-demo-item.active {
+            display: block;
+        }
+
+        .app-demo-item video {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .app-demo-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .dot.active {
+            background: var(--accent-primary);
+        }
+
+        .dit-item {
+            background: rgba(30, 30, 46, 0.5);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .dit-item img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .video-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .video-option {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .video-option:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .video-option.active {
+            border-color: var(--accent-secondary);
+        }
+
+        .video-option video {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .video-option .label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-title {
+                font-size: 40px;
+            }
+            .wild-grid {
+                grid-template-columns: 1fr;
+            }
+            .dit-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 28px;
+                letter-spacing: 2px;
+            }
+            .section-title {
+                font-size: 22px;
+            }
+            .tab-nav {
+                flex-direction: column;
+            }
+            .tab-btn {
+                width: 100%;
+            }
+            .wild-item {
+                grid-template-columns: 1fr;
+            }
+            .video-row {
+                flex-direction: column;
+            }
+            .media-card {
+                width: 100%;
+            }
+        }
+
+        /* Animation for videos */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Glow effect for cards */
+        .glow-hover {
+            transition: box-shadow 0.3s ease;
+        }
+
+        .glow-hover:hover {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Part 6 - Table Grid */
+        .table-grid {
+            display: grid;
+            gap: 2px;
+            margin-top: 20px;
+        }
+
+        .table-header-cell,
+        .table-row-header,
+        .table-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .table-header-cell {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .table-header-cell video {
+            width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .table-row-header {
+            background: #fff;
+        }
+
+        .table-row-header img {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .table-cell {
+            position: relative;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .table-cell video {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* Floating comparison panel - below the cell */
+        .comparison-panel {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            gap: 12px;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            margin-top: 8px;
+            width: 200%;
+        }
+
+        .comparison-panel.right-align {
+            right: 0;
+            left: auto;
+        }
+
+        .table-cell:hover .comparison-panel {
+            display: flex;
+        }
+
+        .comparison-panel .comparison-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .comparison-panel .comparison-item video {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .comparison-label {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .no-data {
+            color: #999;
+            font-size: 12px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .institution-logos { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 32px; margin: 32px auto 0; }
+        .institution-logos img { width: auto; max-width: 260px; height: 64px; object-fit: contain; }
+        .institution-logos img:last-child { max-width: 210px; }
+        .project-logo { display: block; width: 420px; max-width: 65%; height: auto; margin: 0 auto 24px; }
+        .conference-logo { display: block; width: 260px; max-width: 70%; height: auto; margin: 24px auto 28px; }
+        .authors { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 8px 26px; max-width: 1100px; margin: 0 auto; font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 400; line-height: 1.7; color: #344955; letter-spacing: 0; }
+        .authors > span { white-space: nowrap; }
+        .authors sup { font-size: 0.65em; margin-left: 2px; }
+        @media (max-width: 768px) { .authors { font-size: 16px; gap: 8px 20px; } }
+        .overview-section { max-width: none; margin: 0; }
+        .overview-figure { max-width: 1360px; margin: 0 auto; }
+        .overview-figure img { display: block; width: 100%; height: auto; }
+        .overview-figure figcaption { margin-top: 24px; color: var(--text-secondary); font-size: 17px; line-height: 1.8; }
+        .method-steps { margin: 24px 0 0; padding-left: 24px; color: var(--text-secondary); font-size: 17px; line-height: 1.8; }
+        .method-steps li { margin-bottom: 16px; padding-left: 6px; }
+        .method-steps strong { color: var(--text-primary); }
+        @media (max-width: 768px) {
+            .institution-logos { gap: 24px; margin-bottom: 32px; }
+            .institution-logos img { max-width: 42%; height: 44px; }
+            .institution-logos img:last-child { max-width: 42%; }
+            .overview-figure figcaption, .method-steps { font-size: 15px; }
+        }
+        .contact-details { font-size: 17px; line-height: 1.8; color: var(--text-secondary); overflow-wrap: anywhere; }
+        .contact-details a { color: var(--accent-primary); text-underline-offset: 3px; }
+        .paper-links { margin: 24px 0; }
+        .paper-button { display: inline-block; padding: 11px 24px; border: 1px solid var(--border-color); border-radius: 6px; background: #fff; color: #16354b; font-size: 15px; font-weight: 500; text-decoration: none; transition: background 0.2s ease, border-color 0.2s ease; }
+        .paper-button:hover { background: var(--bg-card); border-color: #94a3b8; }
+        .paper-button:focus-visible { outline: 3px solid var(--text-primary); outline-offset: 4px; }
+        .corresponding-name { position: relative; display: inline-block; cursor: help; }
+        .author-tooltip { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); padding: 5px 10px; border: 1px solid var(--border-color); border-radius: 5px; background: #fff; color: var(--text-secondary); font-size: 13px; font-weight: 400; line-height: 1.5; white-space: nowrap; box-shadow: 0 2px 8px rgba(22, 53, 75, 0.08); opacity: 0; visibility: hidden; pointer-events: none; z-index: 10; }
+        .corresponding-name:hover .author-tooltip, .corresponding-name:focus .author-tooltip { opacity: 1; visibility: visible; }
+        .contact-name:hover .contact-tooltip, .contact-name:focus .contact-tooltip, .contact-name:focus-within .contact-tooltip { opacity: 1; visibility: visible; pointer-events: auto; }
+        .contact-tooltip { top: 100%; }
+        .contact-tooltip a { color: #16354b; text-underline-offset: 3px; }
+        @media (max-width: 480px) { .contact-tooltip { left: 0; transform: none; font-size: 11px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <img class="project-logo" src="assets/selfieavatar-transparent.png" alt="SelfieAvatar">
+            <h1 class="main-title">SelfieAvatar: High-Fidelity Animatable 3D Head Avatars from In-the-Wild Selfies</h1>
+            <p class="subtitle"><img class="conference-logo" src="assets/acmmm2026-transparent.png" alt="ACM Multimedia 2026"></p>
+            <p class="authors"><span class="corresponding-name contact-name" tabindex="0" aria-describedby="zhen-contact-tooltip">Zhen Tian<span class="author-tooltip contact-tooltip" id="zhen-contact-tooltip" role="tooltip">Contact: <a href="mailto:zhentian.tian@connect.polyu.hk">zhentian.tian@connect.polyu.hk</a></span></span><span>Ziyang Li</span><span>Yuzhen Jiang</span><span>Huixian Ye</span><span>Zhuoming Chen</span><span class="corresponding-name" tabindex="0" aria-describedby="corresponding-tooltip">Mingguang He<sup>*</sup><span class="author-tooltip" id="corresponding-tooltip" role="tooltip">Corresponding author</span></span></p>
+            <div class="institution-logos" aria-label="Author institutions">
+                <img src="assets/polyu.png" alt="The Hong Kong Polytechnic University">
+                <img src="assets/school-of-optometry.png" alt="School of Optometry, The Hong Kong Polytechnic University">
+                <img src="assets/aimira.svg" alt="Aimira Innovation">
+            </div>
+            <p class="paper-links"><a class="paper-button" href="SelfieAvatar.pdf" type="application/pdf">Full Paper (PDF)</a></p>
+        </div>
+
+        <section id="teaser" class="overview-section">
+            <h2 class="section-title">SelfieAvatar at a Glance</h2>
+            <figure class="overview-figure">
+                <img src="assets/teaser.jpg" alt="SelfieAvatar reconstructs detailed 3D heads from casual selfies and transfers expressions across identities." fetchpriority="high">
+                <figcaption>SelfieAvatar reconstructs a high-fidelity 3D Gaussian head avatar from three casual selfies without camera calibration or consistent facial expressions. A single driving image supplies expression cues for detailed, view-consistent 3D facial reenactment.</figcaption>
+            </figure>
+        </section>
+        <section id="method" class="overview-section">
+            <h2 class="section-title">Method</h2>
+            <figure class="overview-figure">
+                <img src="assets/method.jpg" alt="Framework showing selfie rectification, Gaussian head reconstruction, and expression-conditioned multi-view generation." loading="lazy">
+                <figcaption>Overview of the SelfieAvatar framework: casual selfies are rectified into canonical views for 3D reconstruction; implicit expression encoding and multi-view diffusion enable facial reenactment.</figcaption>
+            </figure>
+            <ol class="method-steps">
+                <li><strong>Selfie-style training data.</strong> We reconstruct synchronized multi-view captures and re-render them under selfie-style camera configurations to bridge the gap between controlled datasets and casual selfies.</li>
+                <li><strong>Camera and expression rectification.</strong> A Diffusion Transformer (DiT), trained with flow matching, aligns the three selfies to canonical viewpoints while matching the center image's expression. The standard three-view configuration uses azimuths of 0°, −45°, and 45°.</li>
+                <li><strong>3D Gaussian head reconstruction.</strong> GS-LRM consumes the rectified images with predefined camera poses and directly predicts pixel-aligned 3D Gaussians. Training combines image reconstruction and perceptual losses to preserve geometry and facial detail.</li>
+                <li><strong>Expression-driven reenactment.</strong> An implicit expression encoder extracts motion cues from a driving image. Cross-attention injects these cues into multi-view diffusion, while multi-view attention maintains consistency across viewpoints. The generated views are reconstructed into an expressive 3D Gaussian avatar.</li>
+            </ol>
+        </section>
+
+        <!-- Part 1: Reconstruction Comparison -->
+        <section id="part1">
+            <h2 class="section-title">Reconstruction: Comparison with Other Models</h2>
+            <p style="margin-bottom: 12px; color: var(--text-secondary);">Comparison between our model and existing methods (FaceLift, GAGAvatar, GPAvatar, LAM, PanoHead, and Portrait4D) in both single-input and three-input scenarios.</p>
+            <p style="margin-bottom: 12px; color: var(--text-secondary)">Due to the maximum size constraints of the supplementary materials, the videos are compressed at a lower bitrate.</p>
+            <p style="margin-bottom: 12px; color: var(--text-secondary)">👇Hover over the video to play.</p>
+
+            <div class="content-card">
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="switchTab('single')">Single Input</button>
+                    <button class="tab-btn" onclick="switchTab('three')">Three Inputs</button>
+                </div>
+
+                <!-- Single Tab -->
+                <div id="single" class="tab-content active">
+                    <!-- teaser -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/single/teaser.jpg" alt="Teaser Input">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_input1.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_facelift.mp4" loop muted playsinline></video>
+                                <div class="media-label">FaceLift</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_gpavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GPAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_lam.mp4" loop muted playsinline></video>
+                                <div class="media-label">LAM</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_panohead.mp4" loop muted playsinline></video>
+                                <div class="media-label">PanoHead</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/teaser_portrait4d.mp4" loop muted playsinline></video>
+                                <div class="media-label">Portrait4D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper1 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/single/paper1.jpg" alt="Paper 1 Input">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_input1.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_facelift.mp4" loop muted playsinline></video>
+                                <div class="media-label">FaceLift</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_gpavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GPAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_lam.mp4" loop muted playsinline></video>
+                                <div class="media-label">LAM</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_panohead.mp4" loop muted playsinline></video>
+                                <div class="media-label">PanoHead</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper1_portrait4d.mp4" loop muted playsinline></video>
+                                <div class="media-label">Portrait4D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper2 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/single/paper2.jpg" alt="Paper 2 Input">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_input1.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_facelift.mp4" loop muted playsinline></video>
+                                <div class="media-label">FaceLift</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_gpavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GPAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_lam.mp4" loop muted playsinline></video>
+                                <div class="media-label">LAM</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_panohead.mp4" loop muted playsinline></video>
+                                <div class="media-label">PanoHead</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper2_portrait4d.mp4" loop muted playsinline></video>
+                                <div class="media-label">Portrait4D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper3 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/single/paper3.jpg" alt="Paper 3 Input">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_input1.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_facelift.mp4" loop muted playsinline></video>
+                                <div class="media-label">FaceLift</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_gpavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GPAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_lam.mp4" loop muted playsinline></video>
+                                <div class="media-label">LAM</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_panohead.mp4" loop muted playsinline></video>
+                                <div class="media-label">PanoHead</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper3_portrait4d.mp4" loop muted playsinline></video>
+                                <div class="media-label">Portrait4D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper5 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/single/paper5.jpg" alt="Paper 5 Input">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_input1.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_facelift.mp4" loop muted playsinline></video>
+                                <div class="media-label">FaceLift</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_gpavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GPAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_lam.mp4" loop muted playsinline></video>
+                                <div class="media-label">LAM</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_panohead.mp4" loop muted playsinline></video>
+                                <div class="media-label">PanoHead</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper5_portrait4d.mp4" loop muted playsinline></video>
+                                <div class="media-label">Portrait4D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper6 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/single/paper6.jpg" alt="Paper 6 Input">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_input1.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_facelift.mp4" loop muted playsinline></video>
+                                <div class="media-label">FaceLift</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_gpavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GPAvatar</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_lam.mp4" loop muted playsinline></video>
+                                <div class="media-label">LAM</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_panohead.mp4" loop muted playsinline></video>
+                                <div class="media-label">PanoHead</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/single/paper6_portrait4d.mp4" loop muted playsinline></video>
+                                <div class="media-label">Portrait4D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Three Tab -->
+                <div id="three" class="tab-content">
+                    <!-- teaser -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/three/teaser.jpg" alt="Teaser">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/teaser_input3.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/teaser_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper1 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/three/paper1.jpg" alt="Paper 1">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper1_input3.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper1_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper2 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/three/paper2.jpg" alt="Paper 2">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper2_input3.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper2_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper3 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/three/paper3.jpg" alt="Paper 3">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper3_input3.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper3_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper5 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/three/paper5.jpg" alt="Paper 5">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper5_input3.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <!-- gagavatar not exist for paper5 -->
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper5_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- paper6 -->
+                    <div class="paper-item">
+                                                <div class="paper-fixed">
+                            <div class="media-card glow-hover">
+                                <img src="part1_reconstruction_comparison/three/paper6.jpg" alt="Paper 6">
+                                <div class="media-label">Input</div>
+                            </div>
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper6_input3.mp4" loop muted playsinline></video>
+                                <div class="media-label">Ours</div>
+                            </div>
+                        </div>
+                        <div class="paper-scroll">
+                            <div class="media-card glow-hover">
+                                <video src="part1_reconstruction_comparison/three/paper6_gagavatar.mp4" loop muted playsinline></video>
+                                <div class="media-label">GAGAvatar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 2: Wild Reconstruction -->
+        <section id="part2">
+            <h2 class="section-title">Reconstruction from In-the-wild Selfies</h2>
+
+            <div class="content-card">
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part2_reconstruction_wild/sample9_3inputs.jpg" alt="Sample 9">
+                            <div class="media-label">Input</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part2_reconstruction_wild/sample9_input3.mp4" loop muted playsinline></video>
+                            <div class="media-label">Result</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part2_reconstruction_wild/sample10_3inputs.jpg" alt="Sample 10">
+                            <div class="media-label">Input</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part2_reconstruction_wild/sample10_input3.mp4" loop muted playsinline></video>
+                            <div class="media-label">Result</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="paper-item">
+                    <div class="paper-fixed">
+<div class="media-card glow-hover">
+                            <img src="part2_reconstruction_wild/sample11_3inputs.jpg" alt="Sample 11">
+                            <div class="media-label">Input</div>
+                        </div>
+<div class="media-card glow-hover">
+                            <video src="part2_reconstruction_wild/sample11_input3.mp4" loop muted playsinline></video>
+                            <div class="media-label">Result</div>
+                        </div>
+<div class="media-card glow-hover">
+                            <img src="part2_reconstruction_wild/sample16_3inputs.jpg" alt="Sample 16">
+                            <div class="media-label">Input</div>
+                        </div>
+<div class="media-card glow-hover">
+                            <video src="part2_reconstruction_wild/sample16_input3.mp4" loop muted playsinline></video>
+                            <div class="media-label">Result</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Part 3: App Demo -->
+        <section id="part3">
+            <h2 class="section-title">Reconstruction App Demo</h2>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">We developed an application that creates a 3D Gaussian head avatar from three selfies. The following videos demonstrate the app's processing procedure. These videos are recorded directly from the screen, with no post-processing applied.</p>
+
+            <div class="content-card">
+                <div class="app-demo-container">
+                    <div class="app-demo-item active" data-index="0">
+                        <video src="part3_app_demo/01.mp4" controls playsinline></video>
+                    </div>
+                    <div class="app-demo-item" data-index="1">
+                        <video src="part3_app_demo/02.mp4" controls playsinline></video>
+                    </div>
+                    
+                    <div class="app-demo-dots">
+                        <span class="dot active" data-index="0"></span>
+                        <span class="dot" data-index="1"></span>
+                        
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 4: Self-Reenactment -->
+        <section id="part4">
+            <h2 class="section-title">Self Reenactment Driven by Single Image</h2>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Comparison between our model and existing methods (GAGAvatar, GPAvatar, LAM, and Portrait4D) in self-reenactment. 👇Hover over the video to play.</p>
+
+            <div class="content-card">
+                <!-- paper1 -->
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part4_reenactment_self_static/paper1_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part4_reenactment_self_static/paper1_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper1_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper1_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper1_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper1_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper1_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- paper2 -->
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part4_reenactment_self_static/paper2_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part4_reenactment_self_static/paper2_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper2_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper2_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper2_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper2_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper2_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- paper3 -->
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part4_reenactment_self_static/paper3_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part4_reenactment_self_static/paper3_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper3_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper3_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper3_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper3_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part4_reenactment_self_static/paper3_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 5: Static Cross Reenactment -->
+        <section id="part5">
+            <h2 class="section-title">Cross Reenactment Driven by Single Image</h2>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Comparison between our model and existing methods (GAGAvatar, GPAvatar, LAM, and Portrait4D) in cross-reenactment from a single image. 👇Hover over the video to play.</p>
+
+            <div class="content-card">
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper1_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper1_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper1_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper1_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper1_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper1_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper1_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper2_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper2_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper2_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper2_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper2_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper2_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper2_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper4_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper4_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper4_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper4_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper4_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper4_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper4_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="paper-item">
+                    <div class="paper-fixed">
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper8_actor.jpg" alt="Actor">
+                            <div class="media-label">Actor</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <img src="part5_reenactment_cross_static/paper8_driver.jpg" alt="Driver">
+                            <div class="media-label">Driver</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper8_ours.mp4" loop muted playsinline></video>
+                            <div class="media-label">Ours</div>
+                        </div>
+                    </div>
+                    <div class="paper-scroll">
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper8_gagavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GAGAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper8_gpavatar.mp4" loop muted playsinline></video>
+                            <div class="media-label">GPAvatar</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper8_lam.mp4" loop muted playsinline></video>
+                            <div class="media-label">LAM</div>
+                        </div>
+                        <div class="media-card glow-hover">
+                            <video src="part5_reenactment_cross_static/paper8_portrait4d.mp4" loop muted playsinline></video>
+                            <div class="media-label">Portrait4D</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Part 6: Dynamic Cross Reenactment -->
+        <section id="part6">
+            <h2 class="section-title">Cross Reenactment Driven by Video</h2>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Comparison between our model and existing methods (GAGAvatar and LAM) in cross-reenactment from video. 👇Hover over the video to show comparison results. </p>
+
+            <div class="content-card">
+                <div class="table-grid" style="grid-template-columns: 150px repeat(5, 1fr);">
+                    <!-- Header row with driver videos -->
+                    <div class="table-header-cell" style="position: relative;">
+                        <span style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);">Reference</span>
+                        <span style="position: absolute; right: -30px; top: 50%; transform: translateY(-50%) rotate(-90deg); white-space: nowrap;">Driving Video</span>
+                    </div>
+                    <div class="table-header-cell">
+                        <video src="part6_reenactment_dynamic/driver/driver_017_EMO-1-shout+laugh.mp4" loop muted playsinline></video>
+                    </div>
+                    <div class="table-header-cell">
+                        <video src="part6_reenactment_dynamic/driver/driver_330_SEN-06-problems_wise_chief.mp4" loop muted playsinline></video>
+                    </div>
+                    <div class="table-header-cell">
+                        <video src="part6_reenactment_dynamic/driver/driver_368_EXP-3-cheeks+nose.mp4" loop muted playsinline></video>
+                    </div>
+                    <div class="table-header-cell">
+                        <video src="part6_reenactment_dynamic/driver/driver_373_EXP-5-mouth.mp4" loop muted playsinline></video>
+                    </div>
+                    <div class="table-header-cell">
+                        <video src="part6_reenactment_dynamic/driver/driver_driving_video.mp4" loop muted playsinline></video>
+                    </div>
+
+                    <!-- Row 2: 00051_ref0_center -->
+                    <div class="table-row-header">
+                        <img src="part6_reenactment_dynamic/reference/reference_00051_ref0_center.jpg" alt="00051_ref0_center">
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00051_ref0_center_017_EMO-1-shout+laugh_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_017_EMO-1-shout+laugh_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_017_EMO-1-shout+laugh_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00051_ref0_center_330_SEN-06-problems_wise_chief_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_330_SEN-06-problems_wise_chief_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_330_SEN-06-problems_wise_chief_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00051_ref0_center_368_EXP-3-cheeks+nose_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_368_EXP-3-cheeks+nose_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_368_EXP-3-cheeks+nose_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00051_ref0_center_373_EXP-5-mouth_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_373_EXP-5-mouth_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_373_EXP-5-mouth_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00051_ref0_center_driving_video_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_driving_video_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00051_ref0_center_driving_video_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: 00146_ref0_center -->
+                    <div class="table-row-header">
+                        <img src="part6_reenactment_dynamic/reference/reference_00146_ref0_center.jpg" alt="00146_ref0_center">
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00146_ref0_center_017_EMO-1-shout+laugh_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_017_EMO-1-shout+laugh_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_017_EMO-1-shout+laugh_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00146_ref0_center_330_SEN-06-problems_wise_chief_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_330_SEN-06-problems_wise_chief_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_330_SEN-06-problems_wise_chief_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00146_ref0_center_368_EXP-3-cheeks+nose_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_368_EXP-3-cheeks+nose_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_368_EXP-3-cheeks+nose_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00146_ref0_center_373_EXP-5-mouth_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_373_EXP-5-mouth_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_373_EXP-5-mouth_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/00146_ref0_center_driving_video_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_driving_video_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/00146_ref0_center_driving_video_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: cartoon_ref0_center -->
+                    <div class="table-row-header">
+                        <img src="part6_reenactment_dynamic/reference/reference_cartoon_ref0_center.jpg" alt="cartoon_ref0_center">
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/cartoon_ref0_center_017_EMO-1-shout+laugh_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item"><span class="no-data">GAGAvatar fail to process</span></div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/cartoon_ref0_center_017_EMO-1-shout+laugh_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/cartoon_ref0_center_330_SEN-06-problems_wise_chief_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item"><span class="no-data">GAGAvatar fail to process</span></div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/cartoon_ref0_center_330_SEN-06-problems_wise_chief_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/cartoon_ref0_center_368_EXP-3-cheeks+nose_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item"><span class="no-data">GAGAvatar fail to process</span></div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/cartoon_ref0_center_368_EXP-3-cheeks+nose_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/cartoon_ref0_center_373_EXP-5-mouth_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item"><span class="no-data">GAGAvatar fail to process</span></div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/cartoon_ref0_center_373_EXP-5-mouth_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/cartoon_ref0_center_driving_video_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item"><span class="no-data">GAGAvatar fail to process</span></div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/cartoon_ref0_center_driving_video_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: target_0 -->
+                    <div class="table-row-header">
+                        <img src="part6_reenactment_dynamic/reference/reference_target_0.jpg" alt="target_0">
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_0_017_EMO-1-shout+laugh_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_017_EMO-1-shout+laugh_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_017_EMO-1-shout+laugh_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_0_330_SEN-06-problems_wise_chief_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_330_SEN-06-problems_wise_chief_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_330_SEN-06-problems_wise_chief_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_0_368_EXP-3-cheeks+nose_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_368_EXP-3-cheeks+nose_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_368_EXP-3-cheeks+nose_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_0_373_EXP-5-mouth_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_373_EXP-5-mouth_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_373_EXP-5-mouth_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_0_driving_video_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_driving_video_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_0_driving_video_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: target_2 -->
+                    <div class="table-row-header">
+                        <img src="part6_reenactment_dynamic/reference/reference_target_2.jpg" alt="target_2">
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_2_017_EMO-1-shout+laugh_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_017_EMO-1-shout+laugh_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_017_EMO-1-shout+laugh_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_2_330_SEN-06-problems_wise_chief_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_330_SEN-06-problems_wise_chief_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_330_SEN-06-problems_wise_chief_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_2_368_EXP-3-cheeks+nose_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_368_EXP-3-cheeks+nose_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_368_EXP-3-cheeks+nose_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_2_373_EXP-5-mouth_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_373_EXP-5-mouth_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_373_EXP-5-mouth_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <video src="part6_reenactment_dynamic/target_2_driving_video_ours.mp4" loop muted playsinline></video>
+                        <div class="comparison-panel">
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_driving_video_gagavatar.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">GAGAvatar</span>
+                            </div>
+                            <div class="comparison-item">
+                                <video src="part6_reenactment_dynamic/target_2_driving_video_lam.mp4" loop muted playsinline></video>
+                                <span class="comparison-label">LAM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Tab switching function
+        function switchTab(tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all media cards
+        document.querySelectorAll('.media-card, .wild-item, .dit-item').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Mark last column cells for proper panel positioning
+        document.querySelectorAll('.table-row').forEach(row => {
+            const cells = row.querySelectorAll('.table-cell');
+            if (cells.length > 0) {
+                const lastCell = cells[cells.length - 1];
+                lastCell.classList.add('last-column');
+                const panel = lastCell.querySelector('.comparison-panel');
+                if (panel) {
+                    panel.classList.add('right-align');
+                }
+            }
+        });
+
+        // Auto-play comparison panel videos when hovering on table cell
+        document.querySelectorAll('.table-cell').forEach(cell => {
+            cell.addEventListener('mouseenter', () => {
+                const panel = cell.querySelector('.comparison-panel');
+                if (panel) {
+                    const videos = panel.querySelectorAll('video');
+                    videos.forEach(video => {
+                        video.play().catch(() => {});
+                    });
+                }
+            });
+            cell.addEventListener('mouseleave', () => {
+                const panel = cell.querySelector('.comparison-panel');
+                if (panel) {
+                    const videos = panel.querySelectorAll('video');
+                    videos.forEach(video => {
+                        video.pause();
+                        video.currentTime = 0;
+                    });
+                }
+            });
+        });
+
+        // App Demo dot switching
+        document.querySelectorAll('.dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const index = dot.dataset.index;
+                document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+                document.querySelectorAll('.app-demo-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.index === index) {
+                        item.classList.add('active');
+                        const video = item.querySelector('video');
+                        // video.play();
+                    } else {
+                        const video = item.querySelector('video');
+                        video.pause();
+                    }
+                });
+            });
+        });
+
+        // Auto play videos for specific parts
+        // Part 1 Ours videos
+        document.querySelectorAll('#part1 .media-label').forEach(label => {
+            if (label.textContent.trim() === 'Ours') {
+                const card = label.closest('.media-card');
+                if (card) {
+                    const video = card.querySelector('video');
+                    if (video) video.play();
+                }
+            }
+        });
+
+        // Part 2 Result videos
+        document.querySelectorAll('#part2 .media-label').forEach(label => {
+            if (label.textContent.trim() === 'Result') {
+                const card = label.closest('.media-card');
+                if (card) {
+                    const video = card.querySelector('video');
+                    if (video) video.play();
+                }
+            }
+        });
+
+        // Part 4 Ours videos
+        document.querySelectorAll('#part4 .media-label').forEach(label => {
+            if (label.textContent.trim() === 'Ours') {
+                const card = label.closest('.media-card');
+                if (card) {
+                    const video = card.querySelector('video');
+                    if (video) video.play();
+                }
+            }
+        });
+
+        // Part 5 Ours videos
+        document.querySelectorAll('#part5 .media-label').forEach(label => {
+            if (label.textContent.trim() === 'Ours') {
+                const card = label.closest('.media-card');
+                if (card) {
+                    const video = card.querySelector('video');
+                    if (video) video.play();
+                }
+            }
+        });
+
+        // Part 6 main videos (not in comparison panel) + driver videos
+        document.querySelectorAll('#part6 .table-cell > video, #part6 .table-header-cell video').forEach(video => {
+            video.play();
+        });
+
+        // Hover play for non-Ours videos in Part 1, Part 2, Part 5
+        // Part 1 non-Ours videos
+        document.querySelectorAll('#part1 .media-card').forEach(card => {
+            const label = card.querySelector('.media-label');
+            if (label && label.textContent.trim() !== 'Ours' && label.textContent.trim() !== 'Input') {
+                const video = card.querySelector('video');
+                if (video) {
+                    card.addEventListener('mouseenter', () => video.play());
+                    card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+                }
+            }
+        });
+
+        // Part 4 non-Ours videos
+        document.querySelectorAll('#part4 .media-card').forEach(card => {
+            const label = card.querySelector('.media-label');
+            if (label && label.textContent.trim() !== 'Ours') {
+                const video = card.querySelector('video');
+                if (video) {
+                    card.addEventListener('mouseenter', () => video.play());
+                    card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+                }
+            }
+        });
+
+        // Part 5 non-Ours videos
+        document.querySelectorAll('#part5 .media-card').forEach(card => {
+            const label = card.querySelector('.media-label');
+            if (label && label.textContent.trim() !== 'Ours' && label.textContent.trim() !== 'Actor' && label.textContent.trim() !== 'Driver') {
+                const video = card.querySelector('video');
+                if (video) {
+                    card.addEventListener('mouseenter', () => video.play());
+                    card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

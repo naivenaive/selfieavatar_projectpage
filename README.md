@@ -1,2 +1,3 @@
-# selfieavatar_projectpage
-Project page for SelfieAvatar
+# Project page for SelfieAvatar
+
+Web site: https://naivenaive.github.io/selfieavatar_projectpage/

@@ -1,5 +1,5 @@
-.container img { cursor: zoom-in; }
-.container img:focus-visible { outline: 2px solid #175ead; outline-offset: 4px; }
+.container section img { cursor: zoom-in; }
+.container section img:focus-visible { outline: 2px solid #175ead; outline-offset: 4px; }
 .image-viewer { position: fixed; inset: 0; margin: auto; width: 96vw; max-width: 1600px; height: 92vh; height: 92dvh; max-height: 100%; padding: 0; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #344955; overflow: hidden; }
 .image-viewer::backdrop { background: rgba(15, 23, 42, 0.8); }
 .image-viewer[open] { display: flex; flex-direction: column; }

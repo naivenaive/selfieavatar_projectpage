@@ -44,7 +44,7 @@
         dialog.showModal();
         image.src = source.currentSrc || source.src;
     }
-    document.querySelectorAll('.container img').forEach(source => {
+    document.querySelectorAll('.container section img').forEach(source => {
         source.tabIndex = 0;
         source.setAttribute('role', 'button');
         source.setAttribute('aria-label', 'Enlarge image: ' + (source.alt || 'Image'));

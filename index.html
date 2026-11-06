@@ -654,6 +654,7 @@
         @media (max-width: 768px) { .contact-trigger { width: 32px; height: 32px; vertical-align: -3px; } }
     </style>
     <link rel="stylesheet" href="assets/mobile.css" media="(max-width: 768px)">
+    <link rel="stylesheet" href="assets/image-viewer.css">
 </head>
 <body>
     <div class="container">
@@ -674,14 +675,14 @@
         <section id="teaser" class="overview-section">
             <h2 class="section-title">SelfieAvatar at a Glance</h2>
             <figure class="overview-figure">
-                <img src="assets/teaser.jpg" alt="SelfieAvatar reconstructs detailed 3D heads from casual selfies and transfers expressions across identities." fetchpriority="high">
+                <img src="assets/teaser.jpg" width="4400" height="1595" alt="SelfieAvatar reconstructs detailed 3D heads from casual selfies and transfers expressions across identities." fetchpriority="high">
                 <figcaption>SelfieAvatar reconstructs a high-fidelity 3D Gaussian head avatar from three casual selfies without camera calibration or consistent facial expressions. A single driving image supplies expression cues for detailed, view-consistent 3D facial reenactment.</figcaption>
             </figure>
         </section>
         <section id="method" class="overview-section">
             <h2 class="section-title">Method</h2>
             <figure class="overview-figure">
-                <img src="assets/method.jpg" alt="Framework showing selfie rectification, Gaussian head reconstruction, and expression-conditioned multi-view generation." loading="lazy">
+                <img src="assets/method.jpg" width="4000" height="1960" alt="Framework showing selfie rectification, Gaussian head reconstruction, and expression-conditioned multi-view generation." loading="lazy">
                 <figcaption>Overview of the SelfieAvatar framework: casual selfies are rectified into canonical views for 3D reconstruction; implicit expression encoding and multi-view diffusion enable facial reenactment.</figcaption>
             </figure>
             <ol class="method-steps">
@@ -1959,5 +1960,6 @@
         }
     </script>
     <script src="assets/mobile.js"></script>
+    <script src="assets/image-viewer.js"></script>
 </body>
 </html>
